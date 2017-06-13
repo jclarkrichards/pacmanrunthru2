@@ -1,0 +1,9 @@
+import pygame
+from entities import MazeMouse
+from constants import *
+from vectors import Vector2D
+
+class Ghost(MazeMouse):
+    def __init__(self, nodes):
+        MazeMouse.__init__(self, nodes)
+        self.name = "ghost"
