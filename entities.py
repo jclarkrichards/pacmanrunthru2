@@ -3,9 +3,10 @@ from vectors import Vector2D
 from constants import *
 
 class MazeMouse(object):
-    def __init__(self, nodes):
+    def __init__(self, nodes, level):
         self.name = ""
         self.nodes = nodes
+        self.level = level
         self.node = nodes.nodeList[0]
         self.target = self.node
         self.setPosition()

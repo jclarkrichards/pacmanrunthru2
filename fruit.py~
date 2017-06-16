@@ -1,0 +1,35 @@
+import pygame
+from entities import MazeMouse
+from constants import *
+
+class CollectedFruit(MazeMouse):
+    def __init__(self, nodes, level):
+        MazeMouse.__init__(self, nodes, level)
+        self.name = "fruit"
+        self.color = (0, 200, 0)
+        self.setStartPosition()
+        self.value = 100
+
+    def setStartPosition(self):
+        pos = MAZEDATA[self.level]["fruit"]
+        self.node = self.nodes.getNode(*pos, nodeList=self.nodes.nodeList)
+        self.target = self.node.neighbors[LEFT]
+        self.setPosition()
+        halfway = (self.node.position.x - self.target.position.x) / 2
+        self.position.x -= halfway
+
+
+class DisplayedFruit(object):
+    def __init__(self, fruit):
+        self.name = fruit.name
+        self.color = fruit.color
+        self.radius = fruit.radius
+
+    def setPosition(self, index):
+        x = WIDTH*NCOLS - (5 + self.radius + (2*self.radius + 5) * index)
+        y = HEIGHT*(NROWS - 1)
+        self.position = Vector2D(x, y)
+
+    def render(self, screen):
+        x, y = self.position.toTuple()
+        pygame.draw.circle(screen, self.color, (x, y), self.radius)

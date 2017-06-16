@@ -10,7 +10,9 @@ class Node(object):
         self.position = Vector2D(column*WIDTH, row*HEIGHT)
         self.neighbors = {UP:None, DOWN:None, LEFT:None, RIGHT:None}
         self.portalNode = None
-        
+        self.home = False
+        self.nowayUp = False
+
     def render(self, screen):
         for n in self.neighbors.keys():
             if self.neighbors[n] is not None:
@@ -25,8 +27,19 @@ class NodeGroup(object):
         self.nodeList = []
         self.grid = None
         self.nodeStack = Stack()
-        self.createNodeList(MAZEDATA[level]["file"], self.nodeList)
-        
+        #self.createNodeList(MAZEDATA[level]["file"], self.nodeList)
+        self.homeList = []
+        self.createMainList()
+        self.createHomeList()
+
+    def createMainList(self):
+        self.createNodeList(MAZEDATA[self.level]["file"], self.nodeList)
+        self.setupPortalNodes()
+
+    def createHomeList(self):
+        self.createNodeList("home.txt", self.homeList)
+        self.moveHomeNodes()
+
     def createNodeList(self, textFile, nodeList):
         self.grid = loadtxt(textFile, dtype=str)
         startNode = self.findFirstNode(*self.grid.shape)
@@ -46,7 +59,6 @@ class NodeGroup(object):
             self.addNodeToStack(rightNode, nodeList)
             self.addNodeToStack(upNode, nodeList)
             self.addNodeToStack(downNode, nodeList)
-        self.setupPortalNodes()
         
     def getNode(self, x, y, nodeList=[]):
         for node in nodeList:
@@ -63,13 +75,16 @@ class NodeGroup(object):
 
     def getPathNode(self, direction, row, col, nodeList):
         tempNode = self.followPath(direction, row, col)
+        self.checkIfOnRestriction(tempNode)
         return self.getNodeFromNode(tempNode, nodeList)
 
     def findFirstNode(self, rows, cols):
         nodeFound = False
         for row in range(rows):
             for col in range(cols):
-                if self.grid[row][col] == "+":
+                if (self.grid[row][col] == "+" 
+                    or self.grid[row][col] == "n" 
+                    or self.grid[row][col] == "N"):
                     return Node(row, col)
         return None
 
@@ -102,8 +117,13 @@ class NodeGroup(object):
             return None
 
     def pathToFollow(self, direction, row, col, path):
-        if self.grid[row][col] == path or self.grid[row][col] == "+":
-            while self.grid[row][col] != "+":
+        if (self.grid[row][col] == path or 
+            self.grid[row][col] == "+" or
+            self.grid[row][col] == "p" or
+            self.grid[row][col] == "P"):
+            while (self.grid[row][col] != "+" and 
+                   self.grid[row][col] != "N" and
+                   self.grid[row][col] != "n"):
                 if direction is LEFT: col -= 1
                 elif direction is RIGHT: col += 1
                 elif direction is UP: row -= 1
@@ -120,6 +140,29 @@ class NodeGroup(object):
             node1.portalNode = node2
             node2.portalNode = node1
             
+    def moveHomeNodes(self):
+        nodeA = self.getNode(*MAZEDATA[self.level]["home"], nodeList=self.nodeList)
+        nodeB = nodeA.neighbors[LEFT]
+        mid = (nodeA.position + nodeB.position) / 2.0
+        mid = Vector2D(int(mid.x), int(mid.y))
+        vec = Vector2D(self.homeList[0].position.x, self.homeList[0].position.y)
+        for node in self.homeList:
+            node.position -= vec
+            node.position += mid
+        nodeA.neighbors[LEFT] = self.homeList[0]
+        nodeB.neighbors[RIGHT] = self.homeList[0]
+        self.homeList[0].neighbors[RIGHT] = nodeA
+        self.homeList[0].neighbors[LEFT] = nodeB
+        self.homeList[0].home = True
+
+    def checkIfOnRestriction(self, node):
+        if node is not None:
+            for tup in MAZEDATA[self.level]["restrictUp"].values():
+                if node.position.x == tup[0] and node.position.y == tup[1]:
+                    node.nowayUp = True
+
     def render(self, screen):
         for node in self.nodeList:
+            node.render(screen)
+        for node in self.homeList:
             node.render(screen)

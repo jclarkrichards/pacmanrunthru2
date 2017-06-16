@@ -5,11 +5,21 @@ from constants import *
 from entities import MazeMouse
 
 class Pacman(MazeMouse):
-    def __init__(self, nodes):
-        MazeMouse.__init__(self, nodes)
+    def __init__(self, nodes, level):
+        MazeMouse.__init__(self, nodes, level)
         self.name = "pacman"
         self.color = YELLOW
-        
+        self.setStartPosition()
+
+    def setStartPosition(self):
+        self.direction = LEFT
+        pos = MAZEDATA[self.level]["start"]["pacman"]
+        self.node = self.nodes.getNode(*pos, nodeList=self.nodes.nodeList)
+        self.target = self.node.neighbors[self.direction]
+        self.setPosition()
+        halfway = (self.node.position.x - self.target.position.x) / 2
+        self.position.x -= halfway        
+
     def update(self, dt):
         self.position += self.direction*self.speed*dt
         direction = self.getValidKey()
@@ -42,7 +52,8 @@ class Pacman(MazeMouse):
             if self.overshotTarget():
                 self.node = self.target
                 self.portal()
-                if self.node.neighbors[direction] is not None:
+                if (self.node.neighbors[direction] is not None and 
+                    not self.node.home):
                     self.target = self.node.neighbors[direction]
                     if self.direction != direction:
                         self.setPosition()
@@ -53,6 +64,35 @@ class Pacman(MazeMouse):
                     else:
                         self.setPosition()
                         self.direction = STOP
-                                    
 
-                            
+    def eatObject(self, obj):
+        d = self.position - obj.position
+        dSquared = d.magnitudeSquared()
+        rSquared = (self.radius + obj.radius)**2
+        if dSquared <= rSquared:
+            return True
+        return False
+                                    
+    def eatPellets(self, pelletList):
+        for pellet in pelletList:
+            if self.eatObject(pellet):
+                return pellet
+        return None
+
+    def eatGhost(self, ghosts):
+        for ghost in ghosts:
+            if self.eatObject(ghost):
+                return ghost
+        return None
+
+    def eatFruit(self, fruit):
+        return self.eatObject(fruit)
+
+    def boostSpeed(self):
+        self.speed = MAXSPEED * 1.5
+
+    def normalSpeed(self):
+        self.speed = MAXSPEED
+
+    def reduceSpeed(self):
+        self.speed = MAXSPEED * 0.8
