@@ -29,6 +29,7 @@ class NodeGroup(object):
         self.nodeStack = Stack()
         #self.createNodeList(MAZEDATA[level]["file"], self.nodeList)
         self.homeList = []
+        self.nodeSymbols = ["+", "n", "N", "M", "H", "F"]
         self.createMainList()
         self.createHomeList()
 
@@ -82,9 +83,7 @@ class NodeGroup(object):
         nodeFound = False
         for row in range(rows):
             for col in range(cols):
-                if (self.grid[row][col] == "+" 
-                    or self.grid[row][col] == "n" 
-                    or self.grid[row][col] == "N"):
+                if self.grid[row][col] in self.nodeSymbols:
                     return Node(row, col)
         return None
 
@@ -117,20 +116,28 @@ class NodeGroup(object):
             return None
 
     def pathToFollow(self, direction, row, col, path):
+        
         if (self.grid[row][col] == path or 
             self.grid[row][col] == "+" or
             self.grid[row][col] == "p" or
             self.grid[row][col] == "P"):
-            while (self.grid[row][col] != "+" and 
-                   self.grid[row][col] != "N" and
-                   self.grid[row][col] != "n"):
+            while self.grid[row][col] not in self.nodeSymbols:
                 if direction is LEFT: col -= 1
                 elif direction is RIGHT: col += 1
                 elif direction is UP: row -= 1
                 elif direction is DOWN: row += 1
+            self.updateMazeData(self.grid[row][col], row, col)
             return Node(row, col)
         else:
             return None
+
+    def updateMazeData(self, symbol, row, col):
+        if symbol == "M":
+            MAZEDATA[self.level]["start"]["pacman"] = (col*WIDTH, row*HEIGHT)
+        elif symbol == "H":
+            MAZEDATA[self.level]["home"] = (col*WIDTH, row*HEIGHT)
+        elif symbol == "F":
+            MAZEDATA[self.level]["fruit"] = (col*WIDTH,row*HEIGHT)
 
     def setupPortalNodes(self):
         for pos1 in MAZEDATA[self.level]["portal"].keys():
@@ -154,6 +161,8 @@ class NodeGroup(object):
         self.homeList[0].neighbors[RIGHT] = nodeA
         self.homeList[0].neighbors[LEFT] = nodeB
         self.homeList[0].home = True
+        ghostHome = self.homeList[0].neighbors[DOWN]
+        MAZEDATA[self.level]["start"]["ghost"] = ghostHome.position.toTuple()
 
     def checkIfOnRestriction(self, node):
         if node is not None:

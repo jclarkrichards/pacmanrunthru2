@@ -5,7 +5,7 @@ class Vector2D(object):
         self.y = y
 
     def __repr__(self):
-        return "Vector2D<"+str(self.x)+", "+str(self.y)+", "+str(self.z)+">"
+        return "Vector2D<"+str(self.x)+", "+str(self.y)+">"
     
     def toTuple(self):
         return (self.x, self.y)

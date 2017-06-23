@@ -3,7 +3,7 @@ from vectors import Vector2D
 from constants import *
 
 class MazeMouse(object):
-    def __init__(self, nodes, level):
+    def __init__(self, nodes, level, spritesheet):
         self.name = ""
         self.nodes = nodes
         self.level = level
@@ -14,6 +14,9 @@ class MazeMouse(object):
         self.speed = 100
         self.radius = 10
         self.color = WHITE
+        self.image = None
+        self.spritesheet = spritesheet
+        self.draw = True
 
     def setPosition(self):
         self.position = self.node.position.copy()
@@ -59,6 +62,10 @@ class MazeMouse(object):
             self.setPosition()
 
     def render(self, screen):
-        px = int(self.position.x)
-        py = int(self.position.y)
-        pygame.draw.circle(screen, self.color, (px, py), self.radius)
+        if self.draw:
+            px = int(self.position.x - 8)
+            py = int(self.position.y - 8)
+            if self.image is not None:
+                screen.blit(self.image, (px, py))
+            else:
+                pygame.draw.circle(screen, self.color, (px, py), self.radius)
